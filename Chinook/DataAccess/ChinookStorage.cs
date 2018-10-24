@@ -11,6 +11,8 @@ namespace Chinook.DataAccess
     {
         // saving the connection of the db to a variable
         private const string ConnectionString = "Server=localhost;Database=Chinook;Trusted_Connection=True;";
+
+        //Provide an endpoint that shows the invoices associated with each sales agent. The result should include the Sales Agent's full name.
         public List<SalesAgents> GetSalesAgent()
         {
 
@@ -46,6 +48,7 @@ namespace Chinook.DataAccess
 
         }
 
+        //Provide an endpoint that shows the Invoice Total, Customer name, Country and Sale Agent name for all invoices.
         public List<InvoiceLine> GetInvoiceLine()
         {
             using (var db = new SqlConnection(ConnectionString))
@@ -80,6 +83,7 @@ namespace Chinook.DataAccess
             }
         }
 
+        //Looking at the InvoiceLine table, provide an endpoint that COUNTs the number of line items for an Invoice with a parameterized Id from user input
         public int GetCount(int id)
         {
             using (var db = new SqlConnection(ConnectionString))
@@ -88,7 +92,7 @@ namespace Chinook.DataAccess
 
                 var command = db.CreateCommand();
                 command.CommandText = @"Select count(*) from InvoiceLine
-                                       where InvoiceLineId = @id";
+                                       where InvoiceId = @id";
 
                 command.Parameters.AddWithValue("@id", id);
 
@@ -98,6 +102,27 @@ namespace Chinook.DataAccess
             
             }
             return id;
+        }
+
+        public bool AddInvoice(Invoice invoice)
+        {
+            using (var db = new SqlConnection(ConnectionString))
+            {
+                db.Open();
+                var command = db.CreateCommand();
+                command.CommandText = @"INSERT INTO [dbo].[Invoice]
+                                        ([CustomerId],[InvoiceDate],[BillingAddress],[Total])
+                                   VALUES (@CustomerId,GetDate(),@BillingAddress,@Total)";
+
+                command.Parameters.AddWithValue("@CustomerId", invoice.CustomerId);
+                //command.Parameters.AddWithValue("@InvoiceDate", invoice.InvoiceDate);
+                command.Parameters.AddWithValue("@BillingAddress", invoice.BillingAddress);
+                command.Parameters.AddWithValue("@Total", invoice.Total);
+
+                var result = command.ExecuteNonQuery();
+
+                return result == 1;
+            }
         }
     }
 }
