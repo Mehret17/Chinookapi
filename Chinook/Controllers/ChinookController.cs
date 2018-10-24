@@ -24,5 +24,17 @@ namespace Chinook.Controllers
         {
             return Ok(_storage.GetSalesAgent());
         }
+
+        [HttpGet("invoiceLine")]
+        public IActionResult GetInvoice()
+        {
+            return Ok(_storage.GetInvoiceLine());
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetId(int id)
+        {
+            return Ok(_storage.GetCount(id));
+        }
     }
 }
