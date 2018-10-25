@@ -9,5 +9,6 @@ namespace Chinook.Models
     {
         public string Name { get; set; }
         public int InvoiceId { get; set; }
+        public int EmployeeId { get; set; }
     }
 }
