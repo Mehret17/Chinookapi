@@ -44,7 +44,7 @@ namespace Chinook.Controllers
             return Ok(_storage.AddInvoice(invoice));
         }
 
-        [HttpPost("employee")]
+        [HttpPut("employee")]
         public IActionResult UpdateEmployee(Employee employee)
         {
             return Ok(_storage.UpdateEmployee(employee.FirstName, employee.LastName, employee.EmployeeId));
