@@ -4,13 +4,20 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Chinook.Models;
+using Dapper;
+using Microsoft.Extensions.Configuration;
 
 namespace Chinook.DataAccess
 {
     public class ChinookStorage
     {
         // saving the connection of the db to a variable
-        private const string ConnectionString = "Server=localhost;Database=Chinook;Trusted_Connection=True;";
+        private readonly string ConnectionString;
+
+        public ChinookStorage(IConfiguration config)
+        {
+            ConnectionString = config.GetSection("ConnectionString").Value;
+        }
 
         //Provide an endpoint that shows the invoices associated with each sales agent. The result should include the Sales Agent's full name.
         public List<SalesAgents> GetSalesAgent()
@@ -20,30 +27,39 @@ namespace Chinook.DataAccess
             using (var db = new SqlConnection(ConnectionString))
             {
                 db.Open();
-                var command = db.CreateCommand();
-                command.CommandText = @"Select E.FirstName + ' ' + E.LastName as Name, InvoiceId
-                                               from Employee E
+
+                var result = db.Query<SalesAgents>(@"select E.FirstName + ' ' + E.LastName as Name, InvoiceId
+                                                 from Employee E
                                                 join Customer C on E.EmployeeId = C.SupportRepId
                                                 join Invoice I on C.CustomerId = I.CustomerId
-                                                Group by E.FirstName, E.LastName, InvoiceId";
+                                                Group by E.FirstName, E.LastName, InvoiceId");
+
+                return result.ToList();
+
+                //var command = db.CreateCommand();
+                //command.CommandText = @"Select E.FirstName + ' ' + E.LastName as Name, InvoiceId
+                //                               from Employee E
+                //                                join Customer C on E.EmployeeId = C.SupportRepId
+                //                                join Invoice I on C.CustomerId = I.CustomerId
+                //                                Group by E.FirstName, E.LastName, InvoiceId";
 
 
-                var reader = command.ExecuteReader();
+                //var reader = command.ExecuteReader();
 
-                var employees = new List<SalesAgents>();
+                //var employees = new List<SalesAgents>();
 
-                while (reader.Read())
-                {
-                    var employee = new SalesAgents
-                    {
-                        InvoiceId = (int)reader["InvoiceId"],
-                        Name = reader["Name"].ToString(),
-                    };
+                //while (reader.Read())
+                //{
+                //    var employee = new SalesAgents
+                //    {
+                //        InvoiceId = (int)reader["InvoiceId"],
+                //        Name = reader["Name"].ToString(),
+                //    };
 
-                    employees.Add(employee);
-                }
+                //    employees.Add(employee);
+                //}
 
-                return employees;
+                //return employees;
             }
 
         }
@@ -104,6 +120,7 @@ namespace Chinook.DataAccess
             return id;
         }
 
+        //Provide a new endpoint to INSERT a new invoice with parameters for customerid and billing address
         public bool AddInvoice(Invoice invoice)
         {
             using (var db = new SqlConnection(ConnectionString))
@@ -125,6 +142,7 @@ namespace Chinook.DataAccess
             }
         }
 
+        //Provide a new endpoint to UPDATE an Employee's name with a parameter for Employee Id and new name
         public bool UpdateEmployee(string FirstName, string LastName, int employeeId)
         {
             using (var db = new SqlConnection(ConnectionString))
