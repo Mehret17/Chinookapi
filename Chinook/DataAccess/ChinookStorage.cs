@@ -4,13 +4,19 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Chinook.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace Chinook.DataAccess
 {
     public class ChinookStorage
     {
         // saving the connection of the db to a variable
-        private const string ConnectionString = "Server=localhost;Database=Chinook;Trusted_Connection=True;";
+        private readonly string ConnectionString;
+
+        public ChinookStorage(IConfiguration config)
+        {
+            ConnectionString = config.GetSection("ConnectionString").Value;
+        }
 
         //Provide an endpoint that shows the invoices associated with each sales agent. The result should include the Sales Agent's full name.
         public List<SalesAgents> GetSalesAgent()
@@ -104,6 +110,7 @@ namespace Chinook.DataAccess
             return id;
         }
 
+        //Provide a new endpoint to INSERT a new invoice with parameters for customerid and billing address
         public bool AddInvoice(Invoice invoice)
         {
             using (var db = new SqlConnection(ConnectionString))
@@ -125,6 +132,7 @@ namespace Chinook.DataAccess
             }
         }
 
+        //Provide a new endpoint to UPDATE an Employee's name with a parameter for Employee Id and new name
         public bool UpdateEmployee(string FirstName, string LastName, int employeeId)
         {
             using (var db = new SqlConnection(ConnectionString))
