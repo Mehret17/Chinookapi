@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Chinook.Models;
+using Dapper;
 using Microsoft.Extensions.Configuration;
 
 namespace Chinook.DataAccess
@@ -26,30 +27,39 @@ namespace Chinook.DataAccess
             using (var db = new SqlConnection(ConnectionString))
             {
                 db.Open();
-                var command = db.CreateCommand();
-                command.CommandText = @"Select E.FirstName + ' ' + E.LastName as Name, InvoiceId
-                                               from Employee E
+
+                var result = db.Query<SalesAgents>(@"select E.FirstName + ' ' + E.LastName as Name, InvoiceId
+                                                 from Employee E
                                                 join Customer C on E.EmployeeId = C.SupportRepId
                                                 join Invoice I on C.CustomerId = I.CustomerId
-                                                Group by E.FirstName, E.LastName, InvoiceId";
+                                                Group by E.FirstName, E.LastName, InvoiceId");
+
+                return result.ToList();
+
+                //var command = db.CreateCommand();
+                //command.CommandText = @"Select E.FirstName + ' ' + E.LastName as Name, InvoiceId
+                //                               from Employee E
+                //                                join Customer C on E.EmployeeId = C.SupportRepId
+                //                                join Invoice I on C.CustomerId = I.CustomerId
+                //                                Group by E.FirstName, E.LastName, InvoiceId";
 
 
-                var reader = command.ExecuteReader();
+                //var reader = command.ExecuteReader();
 
-                var employees = new List<SalesAgents>();
+                //var employees = new List<SalesAgents>();
 
-                while (reader.Read())
-                {
-                    var employee = new SalesAgents
-                    {
-                        InvoiceId = (int)reader["InvoiceId"],
-                        Name = reader["Name"].ToString(),
-                    };
+                //while (reader.Read())
+                //{
+                //    var employee = new SalesAgents
+                //    {
+                //        InvoiceId = (int)reader["InvoiceId"],
+                //        Name = reader["Name"].ToString(),
+                //    };
 
-                    employees.Add(employee);
-                }
+                //    employees.Add(employee);
+                //}
 
-                return employees;
+                //return employees;
             }
 
         }
