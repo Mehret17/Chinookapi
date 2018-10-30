@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Chinook.DataAccess;
 using Chinook.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace Chinook.Controllers
 {
@@ -15,9 +16,9 @@ namespace Chinook.Controllers
     {
         private readonly ChinookStorage _storage;
 
-        public ChinookController()
+        public ChinookController(IConfiguration config)
         {
-            _storage = new ChinookStorage();
+            _storage = new ChinookStorage(config);
         }
         //Provide an endpoint that shows the invoices associated with each sales agent. The result should include the Sales Agent's full name.
         [HttpGet]

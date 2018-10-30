@@ -23,11 +23,10 @@ namespace Chinook.DataAccess
         public List<SalesAgents> GetSalesAgent()
         {
 
-            // connecting  and opening 
             using (var db = new SqlConnection(ConnectionString))
             {
                 db.Open();
-
+                // using dapper
                 var result = db.Query<SalesAgents>(@"select E.FirstName + ' ' + E.LastName as Name, InvoiceId
                                                  from Employee E
                                                 join Customer C on E.EmployeeId = C.SupportRepId
@@ -36,6 +35,7 @@ namespace Chinook.DataAccess
 
                 return result.ToList();
 
+                // using ADO.NET
                 //var command = db.CreateCommand();
                 //command.CommandText = @"Select E.FirstName + ' ' + E.LastName as Name, InvoiceId
                 //                               from Employee E
@@ -70,54 +70,68 @@ namespace Chinook.DataAccess
             using (var db = new SqlConnection(ConnectionString))
             {
                 db.Open();
-                var command = db.CreateCommand();
-                command.CommandText = @"  Select I.Total, C.FirstName+ ' '+ C.LastName as 'CustomerName', C.Country,
+
+                var result = db.Query<InvoiceLine>(@"Select I.Total, C.FirstName+ ' '+ C.LastName as 'CustomerName', C.Country,
                                       E.FirstName +' '+E.LastName as 'SalesAgent' 
                                        From Invoice I
                                        Join Customer C
                                        on I.CustomerId = C.CustomerId
                                        join Employee E
-                                       on E.EmployeeId = C.SupportRepId";
+                                       on E.EmployeeId = C.SupportRepId");
+                return result.ToList();
 
-                var reader = command.ExecuteReader();
+                //var command = db.CreateCommand();
+                //command.CommandText = @"  Select I.Total, C.FirstName+ ' '+ C.LastName as 'CustomerName', C.Country,
+                //                      E.FirstName +' '+E.LastName as 'SalesAgent' 
+                //                       From Invoice I
+                //                       Join Customer C
+                //                       on I.CustomerId = C.CustomerId
+                //                       join Employee E
+                //                       on E.EmployeeId = C.SupportRepId";
 
-                var invoiceInfo = new List<InvoiceLine>();
+                //var reader = command.ExecuteReader();
 
-                while (reader.Read())
-                {
-                    var invoice = new InvoiceLine
-                    {
-                        CustomerName = reader["CustomerName"].ToString(),
-                        SalesAgent = reader["SalesAgent"].ToString(),
-                        Total = (decimal)reader["Total"],
-                        Country = reader["Country"].ToString()
-                    };
+                //var invoiceInfo = new List<InvoiceLine>();
 
-                    invoiceInfo.Add(invoice);
-                }
-                return invoiceInfo;
+                //while (reader.Read())
+                //{
+                //    var invoice = new InvoiceLine
+                //    {
+                //        CustomerName = reader["CustomerName"].ToString(),
+                //        SalesAgent = reader["SalesAgent"].ToString(),
+                //        Total = (decimal)reader["Total"],
+                //        Country = reader["Country"].ToString()
+                //    };
+
+                //    invoiceInfo.Add(invoice);
+                //}
+                //return invoiceInfo;
             }
         }
 
         //Looking at the InvoiceLine table, provide an endpoint that COUNTs the number of line items for an Invoice with a parameterized Id from user input
-        public int GetCount(int id)
+        public int GetCount(int invoiceid)
         {
             using (var db = new SqlConnection(ConnectionString))
             {
                 db.Open();
+                var result = db.QueryFirst<int>(@"Select count(*) from InvoiceLine
+                                       where InvoiceId = @id", new { id = invoiceid });
 
-                var command = db.CreateCommand();
-                command.CommandText = @"Select count(*) from InvoiceLine
-                                       where InvoiceId = @id";
+                return result;
 
-                command.Parameters.AddWithValue("@id", id);
+               // var command = db.CreateCommand();
+               // command.CommandText = @"/*Select count(*) from InvoiceLine*/
+               //                        where InvoiceId = @id";
 
-               // var counter = command.ExecuteScalar();
+               // command.Parameters.AddWithValue("@id", id);
 
-                    id = (int)command.ExecuteScalar();
+               //// var counter = command.ExecuteScalar();
+
+               //     id = (int)command.ExecuteScalar();
             
             }
-            return id;
+            //return id;
         }
 
         //Provide a new endpoint to INSERT a new invoice with parameters for customerid and billing address
@@ -126,19 +140,25 @@ namespace Chinook.DataAccess
             using (var db = new SqlConnection(ConnectionString))
             {
                 db.Open();
-                var command = db.CreateCommand();
-                command.CommandText = @"INSERT INTO [dbo].[Invoice]
-                                        ([CustomerId],[InvoiceDate],[BillingAddress],[Total])
-                                   VALUES (@CustomerId,GetDate(),@BillingAddress,@Total)";
-
-                command.Parameters.AddWithValue("@CustomerId", invoice.CustomerId);
-                //command.Parameters.AddWithValue("@InvoiceDate", invoice.InvoiceDate);
-                command.Parameters.AddWithValue("@BillingAddress", invoice.BillingAddress);
-                command.Parameters.AddWithValue("@Total", invoice.Total);
-
-                var result = command.ExecuteNonQuery();
+                var result = db.Execute(@"INSERT INTO [dbo].[Invoice]
+                                       ([CustomerId],[InvoiceDate],[BillingAddress],[Total])
+                                       VALUES (@CustomerId,GetDate(),@BillingAddress,@Total)", invoice);
 
                 return result == 1;
+                
+                //var command = db.CreateCommand();
+                //command.CommandText = @"INSERT INTO [dbo].[Invoice]
+                //                        ([CustomerId],[InvoiceDate],[BillingAddress],[Total])
+                //                   VALUES (@CustomerId,GetDate(),@BillingAddress,@Total)";
+
+                //command.Parameters.AddWithValue("@CustomerId", invoice.CustomerId);
+                ////command.Parameters.AddWithValue("@InvoiceDate", invoice.InvoiceDate);
+                //command.Parameters.AddWithValue("@BillingAddress", invoice.BillingAddress);
+                //command.Parameters.AddWithValue("@Total", invoice.Total);
+
+                //var result = command.ExecuteNonQuery();
+
+                //return result == 1;
             }
         }
 
@@ -148,17 +168,22 @@ namespace Chinook.DataAccess
             using (var db = new SqlConnection(ConnectionString))
             {
                 db.Open();
-                var command = db.CreateCommand();
-                command.CommandText = @"UPDATE[dbo].[Employee] 
+                var result = db.Execute(@"UPDATE[dbo].[Employee] 
                                        SET LastName = @LastName,FirstName=@FirstName
-                                       where [EmployeeId] = @EmployeeId";
-                command.Parameters.AddWithValue("@LastName", LastName);
-                command.Parameters.AddWithValue("@FirstName", FirstName);
-                command.Parameters.AddWithValue("@EmployeeId", employeeId);
-
-                var result = command.ExecuteNonQuery();
+                                       where [EmployeeId] = @EmployeeId", new {employeeid = employeeId, LastName = LastName, FirstName = FirstName });
 
                 return result == 1;
+                //var command = db.CreateCommand();
+                //command.CommandText = @"UPDATE[dbo].[Employee] 
+                //                       SET LastName = @LastName,FirstName=@FirstName
+                //                       where [EmployeeId] = @EmployeeId";
+                //command.Parameters.AddWithValue("@LastName", LastName);
+                //command.Parameters.AddWithValue("@FirstName", FirstName);
+                //command.Parameters.AddWithValue("@EmployeeId", employeeId);
+
+                //var result = command.ExecuteNonQuery();
+
+                //return result == 1;
 
             }
         }

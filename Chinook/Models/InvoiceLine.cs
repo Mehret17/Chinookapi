@@ -11,7 +11,7 @@ namespace Chinook.Models
         public string SalesAgent { get; set; }
         public decimal Total { get; set; }
         public string Country { get; set; }
-        public int InvoiceLineId { get; set; }
+        public int InvoiceId { get; set; }
 
     }
 }
